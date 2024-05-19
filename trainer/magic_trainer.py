@@ -68,6 +68,7 @@ class MagicTrainer(ClientTrainer):
             label = dataset["labels"]
             main_args.n_dim = n_node_feat
             main_args.e_dim = n_edge_feat
+            main_args.optimizer = "adamw"
             set_random_seed(0)
             #model.load_state_dict(torch.load("./checkpoints/checkpoint-{}.pt".format(dataset_name), map_location=device))
             optimizer = create_optimizer(main_args.optimizer, self.model, main_args.lr, main_args.weight_decay)
@@ -76,6 +77,7 @@ class MagicTrainer(ClientTrainer):
         else:
             main_args.max_epoch = 50            
             nsnapshot = args.snapshot
+            main_args.optimizer = "adam"
             set_random_seed(0)
             #model.load_state_dict(torch.load("./checkpoints/checkpoint-{}.pt".format(dataset_name), map_location=device))
             optimizer = create_optimizer(main_args.optimizer, self.model, main_args.lr, main_args.weight_decay)
