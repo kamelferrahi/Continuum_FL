@@ -38,7 +38,7 @@ def generate_dataset(name, number, nsnapshot):
     
     if (name in ['wget', 'streamspot', 'SC2', 'Unicorn-Cadets', 'wget-long', 'clearscope-e3']):
         
-        return dataset, load_data(name, 0.6, 0.2 ,0.2)
+        return dataset, load_data(name)
     else:
         return dataset, load_metadata(name) 
            
@@ -58,7 +58,10 @@ if __name__ == "__main__":
             
         main_args.max_epoch = 6
         out_dim = 64
-        gnn_layer = 5
+        if (dataset_name == 'SC2'):
+            gnn_layer = 3
+        else:
+            gnn_layer = 5
         n_node_feat = metadata['n_feat']
         n_edge_feat = metadata['e_feat']
         use_all_hidden =  True

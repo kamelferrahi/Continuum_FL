@@ -28,7 +28,7 @@ def darpa_split(name):
        
 
 def create_random_split(name, snapshots):
-    dataset = load_data(name, 0.6, 0.2 , 0.2)
+    dataset = load_data(name)
     # Random 80/10/10 split as suggested 
     
 
@@ -262,71 +262,38 @@ def get_labels(name):
     elif (name == 'clearscope-e3'):
         return [0] * 44 + [1] * 50
     
-def load_data(name, nsnapshot, train_percent, validation_percent):
-    #dataset, n_dim, e_dim = load_raw_data(name, nsnapshot)
-    if (name == "wget"):
-        n = 150
-        n_dim = 14
-        e_dim = 4
-        n_train = int(n * train_percent)
-        n_validation = int(n * validation_percent)
-        full_dataset_index =  list(range(n))
-        random.shuffle(full_dataset_index)
-        #train_dataset = full_dataset_index[:n_train]
+def load_data(name):
+    if name == "wget":
+        n, n_dim, e_dim = 150, 14, 4
+        full_dataset_index = list(range(n))
         train_dataset = list(range(50, 150))
-        #validation_dataset = full_dataset_index[n_train: n_train + n_validation]
-        #test_dataset = full_dataset_index[ n_train + n_validation:]
-        validation_dataset =  list(range(50))
+        validation_dataset = list(range(50))
         test_dataset = list(range(50))
-
-    elif (name == "streamspot"):
-
-        n = 600
-        n_train = int(n * train_percent)
-        n_validation = int(n * validation_percent)
-        full_dataset_index =  list(range(n))
-        random.shuffle(full_dataset_index)
+    elif name == "streamspot":
+        n, n_dim, e_dim = 600, 8, 26
+        full_dataset_index = list(range(n))
         train_dataset = list(range(300)) 
-        validation_dataset =  list(range(300, 350)) + list(range(500,550))
+        validation_dataset = list(range(300, 350)) + list(range(500,550))
         test_dataset = list(range(300, 400)) + list(range(400,500))+ list(range(500,600))
-
-    elif (name == 'SC2'):
-
-        n = 150
+    elif name == 'SC2':
         n_dim = len(pkl.load(open(path_dataset + 'SC2/node.pkl', 'rb')).keys())
         e_dim = len(pkl.load(open(path_dataset + 'SC2/edge.pkl', 'rb')).keys())
-        full_dataset_index=  list(range(n))
-        train_dataset = list(range(0, 100))
-        #validation_dataset = full_dataset_index[n_train: n_train + n_validation]
-        #test_dataset = full_dataset_index[ n_train + n_validation:]
-        validation_dataset =  list(range(0, 150))
-        test_dataset = list(range(0, 150))
-
-    elif(name == 'Unicorn-Cadets' or name == 'wget-long' or name == 'clearscope-e3'):
+        n, full_dataset_index = 150, list(range(150))
+        train_dataset = list(range(100))
+        validation_dataset = list(range(100, 150))
+        test_dataset = list(range(100, 150))
+    elif name in ['Unicorn-Cadets', 'wget-long', 'clearscope-e3']:
         n_dim = len(pkl.load(open(path_dataset + '{}/node.pkl'.format(name), 'rb')).keys())
         e_dim = len(pkl.load(open(path_dataset + '{}/edge.pkl'.format(name), 'rb')).keys())
-        
-        if (name == 'Unicorn-Cadets'):
-            n = 112
-            train_dataset = list(range(0, 70))
-            validation_dataset =  list(range(70, 112))
-            test_dataset = list(range(70, 112))
-        elif (name == 'wget-long'):
-            n = 105 
-            train_dataset = list(range(0, 70))
-            validation_dataset =  list(range(70, 105))
-            test_dataset = list(range(70, 105))
-
+        if name == 'Unicorn-Cadets':
+            n, train_dataset = 112, list(range(70))
+        elif name == 'wget-long':
+            n, train_dataset = 105, list(range(70))
         else:
-            n = 94
-            train_dataset = list(range(0, 30))
-            validation_dataset =  list(range(30, 94))
-            test_dataset = list(range(30, 94))
-
-        full_dataset_index=  list(range(n))
-
-
-
+            n, train_dataset = 94, list(range(30))
+        full_dataset_index = list(range(n))
+        validation_dataset = list(range(train_dataset[-1], n))
+        test_dataset = validation_dataset
     return {'dataset': full_dataset_index,
             'train_index': train_dataset,
             'test_index': test_dataset,
@@ -335,6 +302,7 @@ def load_data(name, nsnapshot, train_percent, validation_percent):
             'n_feat': n_dim,
             'e_feat': e_dim,
             'labels': get_labels(name)}
+            
 
             
 def load_graph(id, name ,device):

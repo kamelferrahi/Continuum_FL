@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn 
-import torch.nn.functional as F
 from utils.poolers import Pooling
-from torch.nn import GRUCell
 from .loss_func import sce_loss
 from .gat import GAT
 from .rnn import RNN_Cells
@@ -14,23 +12,21 @@ class STGNN_AutoEncoder(nn.Module):
     def __init__(self, n_dim, e_dim, hidden_dim, out_dim, n_layers, n_heads, device, number_snapshot, activation, feat_drop, negative_slope, residual, norm, pooling, loss_fn="sce", alpha_l=2, use_all_hidden = True):
         super(STGNN_AutoEncoder, self).__init__()
 
-        
-        #self.encoder = GNN_RNN(n_dim, e_dim, hidden_dim, out_dim ,n_layers, n_heads, device, number_snapshot)
+        #Initialize the encoder and decoder structure
         self.encoder = STGNN(n_dim, e_dim, out_dim, out_dim, n_layers, n_heads, n_heads, number_snapshot, activation, feat_drop, negative_slope, residual, norm, True, use_all_hidden, device)
-        
-        self.n_layers = n_layers
-        self.pooler = Pooling(pooling)
-
-
-
         self.decoder = STGNN(out_dim, e_dim, out_dim, n_dim, 1, n_heads, 1, number_snapshot, activation, feat_drop, negative_slope, residual, norm, False, False, device)
-        self.number_snapshot = number_snapshot
+        
 
+        # Linear layer for mapping encoder output to decoder input
         if (use_all_hidden):
             self.encoder_to_decoder = nn.Linear(n_layers * out_dim, out_dim, bias=False)
         else:
             self.encoder_to_decoder = nn.Linear(out_dim, out_dim, bias=False)
 
+            # Additional components and parameters
+        self.n_layers = n_layers
+        self.pooler = Pooling(pooling)
+        self.number_snapshot = number_snapshot
         self.use_all_hidden = use_all_hidden
         self.device = device
         self.criterion = self.setup_loss_fn(loss_fn, alpha_l)
@@ -52,7 +48,8 @@ class STGNN_AutoEncoder(nn.Module):
 
     def forward(self, g):   
 
-        node_features = []
+        # Encode input graphs
+        node_features = []  
         new_t = []
         for G in g:
             new_g = G.clone()

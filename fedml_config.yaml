@@ -9,7 +9,7 @@ common_args:
   random_seed: 0
   
 data_args:
-  dataset: "wget"
+  dataset: "SC2"
   data_cache_dir: ~/fedgraphnn_data/
   part_file:  ~/fedgraphnn_data/partition
 
@@ -23,17 +23,17 @@ environment_args:
 train_args:
   federated_optimizer: "FedAvg"
   client_id_list: 
-  client_num_in_total: 2
-  client_num_per_round: 2
+  client_num_in_total: 3
+  client_num_per_round: 3
   comm_round: 1
-  snapshot: 1
+  snapshot: 3
 
 validation_args:
   frequency_of_the_test: 1
 
 device_args:
-  worker_num: 2
-  using_gpu: true
+  worker_num: 3
+  using_gpu: false
   gpu_mapping_file: gpu_mapping.yaml
   gpu_mapping_key: mapping_config
 
@@ -51,9 +51,9 @@ tracking_args:
   wandb_project: fedml
   wandb_name: fedml_torch
 
-fhe_args:
-  enable_fhe: true
-  scheme: ckks
-  batch_size: 8192
-  scaling_factor: 52
-  file_loc: "resources/cryptoparams/"
+# fhe_args:
+# #   enable_fhe: true
+ #  scheme: ckks
+#  batch_size: 8192
+#   scaling_factor: 52
+#   file_loc: "resources/cryptoparams/"

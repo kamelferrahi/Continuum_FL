@@ -16,7 +16,7 @@ def batch_level_evaluation(model, pooler, device, method, dataset, n_dim=0, e_di
     model.eval()
     x_list = []
     y_list = []
-    data = load_data(dataset, 1, 0.6, 0.2)
+    data = load_data(dataset)
     full = data['full_index']
     labels = data['labels']
     with torch.no_grad():

@@ -49,14 +49,15 @@ class MagicTrainer(ClientTrainer):
     def train(self, train_data, device, args):
         main_args = build_args()
         dataset_name = self.name
+        input('start')
         if (dataset_name in ['wget', 'streamspot', 'SC2', 'Unicorn-Cadets', 'wget-long', 'clearscope-e3']):
-            if (dataset_name == 'wget' or dataset_name == 'streamspot'):
+            if (dataset_name == 'wget' or dataset_name == 'streamspot' or dataset_name == 'Unicorn-Cadets'  or dataset_name == 'clearscope-e3'):
                 batch_size = 1
                 main_args.max_epoch = 6
 
-            elif (dataset_name == 'SC2' or dataset_name == 'Unicorn-Cadets' or dataset_name == 'wget-long' or dataset_name == 'clearscope-e3'):
+            elif (dataset_name == 'SC2' or dataset_name == 'wget-long'):
                 batch_size = 1
-                main_args.max_epoch = 50
+                main_args.max_epoch = 1
  
         
             dataset = load_data(dataset_name, 1, 0.6, 0.2)
