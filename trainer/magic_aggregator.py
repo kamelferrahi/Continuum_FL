@@ -72,7 +72,7 @@ class MagicWgetAggregator(ServerAggregator):
         if (self.name in ['wget', 'streamspot', 'SC2', 'Unicorn-Cadets', 'wget-long', 'clearscope-e3']):
             logging.info("----------test--------") 
             set_random_seed(0)
-            dataset = load_data(dataset_name, 1, 0.6, 0.2)
+            dataset = load_data(dataset_name)
             n_node_feat = dataset['n_feat']
             n_edge_feat = dataset['e_feat']
                 #train_index = [104, 118, 86, 74, 16, 12, 117, 108, 59, 146, 97, 49, 107, 47, 23, 111, 32, 124, 121, 119, 141, 50, 43, 98, 73, 80, 4, 140, 1, 17, 55, 136, 95, 120, 103, 94, 34, 68, 130, 26, 30, 29, 129, 71, 6, 128, 84, 85, 72, 96, 87, 58, 81, 79, 31, 37, 54, 93, 135, 33, 61, 134, 52, 106, 126, 139, 8, 115, 82, 46, 101, 114, 60, 138, 132, 5, 2, 19, 143, 77, 92, 123, 42, 113, 125, 15, 105, 14, 145, 148]
@@ -109,7 +109,7 @@ class MagicWgetAggregator(ServerAggregator):
                 g = load_entity_level_dataset(self.name, 'test', i, nsnapshot, device)
                 # Exclude training samples from the test set
                 if i != n_test - 1:
-                    skip_benign += g.number_of_nodes()
+                    skip_benign += g[0].number_of_nodes()
                 x_test.append(model.embed(g).cpu().detach().numpy())
                 del g
             x_test = np.concatenate(x_test, axis=0)

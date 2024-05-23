@@ -75,12 +75,12 @@ if __name__ == "__main__":
         main_args.n_dim = n_node_feat
         main_args.e_dim = n_edge_feat
         main_args.max_epoch = 50
-        out_dim = 128
+        out_dim = 64
 
         if (dataset_name == 'cadets-e3'):
             gnn_layer = 4
         else:
-            gnn_layer = 5
+            gnn_layer = 3
 
         
 

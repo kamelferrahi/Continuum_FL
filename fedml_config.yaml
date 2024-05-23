@@ -9,31 +9,27 @@ common_args:
   random_seed: 0
   
 data_args:
-  dataset: "SC2"
-  data_cache_dir: ~/fedgraphnn_data/
-  part_file:  ~/fedgraphnn_data/partition
+  dataset: "theia-e3"
 
 model_args:
   model_file_cache_folder: "./model_file_cache" # will be filled by the server automatically
   global_model_file_path: "./model_file_cache/global_model.pt"
 
-environment_args:
-  bootstrap: config/bootstrap.sh
 
 train_args:
   federated_optimizer: "FedAvg"
   client_id_list: 
-  client_num_in_total: 3
-  client_num_per_round: 3
+  client_num_in_total: 2
+  client_num_per_round: 2
   comm_round: 1
-  snapshot: 3
+  snapshot: 1
 
 validation_args:
   frequency_of_the_test: 1
 
 device_args:
-  worker_num: 3
-  using_gpu: false
+  worker_num: 2
+  using_gpu: true
   gpu_mapping_file: gpu_mapping.yaml
   gpu_mapping_key: mapping_config
 
@@ -41,8 +37,6 @@ device_args:
 comm_args:
   backend: "MQTT_S3"
   mqtt_config_path: config/mqtt_config.yaml
-  s3_config_path: config/s3_config.yaml
-
 
 tracking_args:
    # When running on MLOps platform(open.fedml.ai), the default log path is at ~/.fedml/fedml-client/fedml/logs/ and ~/.fedml/fedml-server/fedml/logs/
