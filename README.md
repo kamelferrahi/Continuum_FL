@@ -1,6 +1,6 @@
-# FEDHE-Graph 
+# CONTINUUM-FEDHE-Graph 
 
-Welcome to the official repository housing the FEDHE-Graph implementation for Magic! This repository provides you with the necessary tools and resources to leverage federated learning techniques within the context of Magic, a comprehensive framework for federated learning research.
+Welcome to the official repository housing the FEDHE-Graph implementation for our solution Continuum! This repository provides you with the necessary tools and resources to leverage federated learning techniques within the context of Continuum, a comprehensive framework for federated learning research.
 
 ![architecture(1)-1](https://github.com/kamelferrahi/MAGIC_FEDERATED_FedML/assets/72205931/f3e67d1f-2fa1-4800-81e6-7d9c5e509cf7)
 
