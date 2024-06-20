@@ -9,7 +9,7 @@ common_args:
   random_seed: 0
   
 data_args:
-  dataset: "theia-e3"
+  dataset: "trace-e3"
 
 model_args:
   model_file_cache_folder: "./model_file_cache" # will be filled by the server automatically

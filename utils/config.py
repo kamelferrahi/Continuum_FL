@@ -4,7 +4,7 @@ import argparse
 def build_args():
     parser = argparse.ArgumentParser(description="MAGIC")
     parser.add_argument("--device", type=int, default=-1)
-    parser.add_argument("--lr", type=float, default=0.01,
+    parser.add_argument("--lr", type=float, default=0.0001,
                         help="learning rate")
     parser.add_argument("--weight_decay", type=float, default=5e-4,
                         help="weight decay")
