@@ -24,7 +24,7 @@ pip install "fedml[MPI]"
 Clone the Continuum FedML project onto your current folder 
 
 ```
-git clone https://github.com/kamelferrahi/[MAGIC_FEDERATED_FedML](https://github.com/kamelferrahi/Continuum_FL)
+git clone https://github.com/kamelferrahi/Continuum_FL
 ```
 
 Install the necessary packages for Continuum to run
