@@ -148,9 +148,31 @@ g.ndata["type"]
 
 ---
 
-## 5. 运行方法
+## 5. 运行方法：训练和评估的区别
 
-### 5.1 图级检测
+`main.py` 有两种运行模式：
+
+| 模式 | 是否训练模型 | 是否评估模型 | 何时使用 |
+| --- | --- | --- | --- |
+| **训练 + 自动评估** | 是 | 是 | 第一次运行某个数据集，或想重新训练模型。 |
+| **只评估已有检查点** | 否 | 是 | 已经有训练好的 `checkpoint-*.pt`，只想复现实验指标或快速测试。 |
+
+也就是说：
+
+- **不加 `--eval-only`**：先训练 STGNN Autoencoder，然后自动用 KNN 做评估。
+- **加 `--eval-only`**：跳过训练，只加载 `--checkpoint` 指定的已有模型，然后做 KNN 评估。
+- 图级检测和实体级/节点级检测都遵循这个规则；差别只在于 `--dataset` 选择不同。
+- `--validation` 不是最终评估。它只是在图级训练过程中每个 epoch 后额外跑一次验证，默认关闭，因为会明显变慢。
+
+### 5.1 图级检测：训练 + 自动评估
+
+下面命令会对 `wget` 数据集执行完整流程：
+
+1. 读取训练图。
+2. 训练 STGNN Autoencoder。
+3. 保存检查点到 `checkpoints/checkpoint-wget.pt`。
+4. 自动在图级嵌入上运行 KNN 异常检测并打印 AUC、F1、Precision、Recall 等指标。
+5. 保存最终模型到 `result/local-wget.pt`。
 
 ```bash
 python main.py \
@@ -160,7 +182,16 @@ python main.py \
   --device auto
 ```
 
-### 5.2 实体级/节点级检测
+### 5.2 实体级/节点级检测：训练 + 自动评估
+
+下面命令会对 `trace-e3` 数据集执行完整流程：
+
+1. 读取训练图快照。
+2. 训练 STGNN Autoencoder。
+3. 保存检查点到 `checkpoints/checkpoint-trace-e3.pt`。
+4. 生成训练集和测试集节点嵌入。
+5. 用 KNN 做节点级异常检测并打印指标。
+6. 保存最终模型到 `result/local-trace-e3.pt`。
 
 ```bash
 python main.py \
@@ -170,7 +201,9 @@ python main.py \
   --device cuda:0
 ```
 
-### 5.3 只评估已有检查点
+### 5.3 图级检测：只评估已有检查点
+
+下面命令不会训练模型。它会直接加载 `checkpoints/checkpoint-wget.pt`，然后对 `wget` 做图级 KNN 评估。
 
 ```bash
 python main.py \
@@ -182,39 +215,57 @@ python main.py \
   --checkpoint checkpoints/checkpoint-wget.pt
 ```
 
+### 5.4 实体级/节点级检测：只评估已有检查点
+
+下面命令不会训练模型。它会直接加载 `checkpoints/checkpoint-trace-e3.pt`，然后对 `trace-e3` 做节点级 KNN 评估。
+
+```bash
+python main.py \
+  --dataset trace-e3 \
+  --data-root /path/to/datasets \
+  --snapshot 1 \
+  --device cuda:0 \
+  --eval-only \
+  --checkpoint checkpoints/checkpoint-trace-e3.pt
+```
+
 ---
 
 ## 6. 常用参数
 
 | 参数 | 默认值 | 说明 |
 | --- | --- | --- |
-| `--dataset` | `wget` | 数据集名称。 |
+| `--dataset` | `wget` | 数据集名称。决定运行图级检测还是实体级/节点级检测。 |
 | `--data-root` | `./datasets` | 数据集根目录。 |
 | `--snapshot` | `1` | 每个样本读取的快照数量。 |
 | `--device` | `auto` | `auto`、`cpu`、`cuda`、`cuda:0` 等。 |
-| `--epochs` | 自动 | 图级默认 6，实体级默认 50。 |
-| `--batch-size` | `1` | 图级训练 batch size。 |
-| `--lr` | `0.0001` | 学习率。 |
-| `--optimizer` | `adam` | 可选 `adam`、`adamw`、`adadelta`、`radam`、`sgd`。 |
-| `--out-dim` | `64` | STGNN 隐层/输出维度。 |
-| `--gnn-layers` | 自动 | GAT 层数。 |
-| `--heads` | `4` | GAT 注意力头数。 |
+| `--epochs` | 自动 | 训练轮数。图级默认 6，实体级默认 50。只评估时不会使用。 |
+| `--batch-size` | `1` | 图级训练 batch size。只评估时不会使用。 |
+| `--lr` | `0.0001` | 学习率。只评估时不会使用。 |
+| `--optimizer` | `adam` | 训练优化器，可选 `adam`、`adamw`、`adadelta`、`radam`、`sgd`。只评估时不会使用。 |
+| `--out-dim` | `64` | STGNN 隐层/输出维度。训练和加载检查点时需保持一致。 |
+| `--gnn-layers` | 自动 | GAT 层数。训练和加载检查点时需保持一致。 |
+| `--heads` | `4` | GAT 注意力头数。训练和加载检查点时需保持一致。 |
 | `--pooling` | `mean` | 图级嵌入聚合方式。 |
-| `--checkpoint-dir` | `./checkpoints` | 检查点目录。 |
+| `--checkpoint-dir` | `./checkpoints` | 训练后保存检查点的目录。 |
 | `--result-dir` | `./result` | 最终模型保存目录。 |
-| `--eval-only` | 关闭 | 只加载检查点评估。 |
+| `--checkpoint` | 自动 | 只评估或加载指定模型时使用的检查点路径。 |
+| `--eval-only` | 关闭 | 开启后跳过训练，只加载检查点并评估。 |
+| `--validation` | 关闭 | 图级训练过程中的中间验证，不是最终评估；默认关闭。 |
 
 ---
 
 ## 7. 输出文件
 
-训练和评估完成后会生成：
+执行“训练 + 自动评估”时会生成：
 
 ```text
 checkpoints/checkpoint-{dataset}.pt
 result/local-{dataset}.pt
 eval_result/distance_save_{dataset}.pkl
 ```
+
+执行“只评估已有检查点”时不会重新训练，也不会覆盖 `checkpoints/checkpoint-{dataset}.pt`；但仍可能生成或复用 `eval_result/distance_save_{dataset}.pkl` 作为 KNN 距离缓存。
 
 终端会打印 AUC、F1、Precision、Recall、TP、FP、TN、FN 等指标。
 
