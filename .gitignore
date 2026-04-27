@@ -1,11 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.venv/
+venv/
+env/
+
+# Outputs
+checkpoints/
+result/
+eval_result/
+model_file_cache/
+runs/
+*.pt
+*.pth
+*.ckpt
+
+# Local datasets and generated graph caches
+datasets/
+data/
 graphs.pkl
-data/wget
+metadata.pkl
 train*.pkl
 test*.pkl
-metadata.pkl
-*.json
 *.tsv
-a.yml
-a.yaml
-train.py
-test.py
+
+# Local configs
+.env
+*.local.yaml
+*.local.yml
