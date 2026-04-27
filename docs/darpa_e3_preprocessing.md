@@ -56,7 +56,36 @@ python main.py --dataset theia-e3 --data-root ./datasets --snapshot 1 --device a
 ./datasets/theia-e3/
 ```
 
-### 2.1 theia-e3
+### 2.1 先理解“哪些文件用于训练/测试”与“哪些文件建议保留”的区别
+
+DARPA E3 原始数据通常会被拆成多个连续分片，例如：
+
+```text
+ta1-theia-e3-official-6r.json
+ta1-theia-e3-official-6r.json.1
+ta1-theia-e3-official-6r.json.2
+ta1-theia-e3-official-6r.json.3
+ta1-theia-e3-official-6r.json.4
+ta1-theia-e3-official-6r.json.5
+ta1-theia-e3-official-6r.json.6
+ta1-theia-e3-official-6r.json.7
+ta1-theia-e3-official-6r.json.8
+```
+
+原始 CONTINUUM 实验脚本并不是把所有分片都作为训练/测试样本。它对 `theia-e3` 采用了一个硬编码划分：
+
+- `ta1-theia-e3-official-6r.json`、`.1`、`.2`、`.3` 用作训练来源。
+- `ta1-theia-e3-official-6r.json.8` 用作测试来源。
+
+所以文档中的 `json、json.1、json.2、json.3、json.8` 指的是**当前复现实验划分真正参与构图、切快照、训练和测试的文件**，不是说原始压缩包里只应该有这几个文件。
+
+如果你手里有 `.4`、`.5`、`.6`、`.7`，建议也保留在 `datasets/theia-e3/` 目录中，不要删掉。它们目前不会被当作训练/测试样本使用，但在一些原始数据发布和解析场景中，额外分片可能包含后续事件引用到的实体定义或辅助记录。保留它们更安全，也方便后续扩展实验划分。
+
+---
+
+### 2.2 theia-e3：最小必需结构
+
+如果只想按当前 CONTINUUM 实验划分运行，最小必需文件是：
 
 ```text
 datasets/
@@ -75,7 +104,30 @@ datasets/
 - `ta1-theia-e3-official-6r.json.8` 作为测试来源。
 - `theia-e3.txt` 是恶意实体 UUID 列表，一行一个 UUID，用于生成 `malicious.pkl`。
 
-### 2.2 trace-e3
+### 2.3 theia-e3：推荐保留结构
+
+如果你从原始压缩包解压后得到了更多连续分片，推荐保留为：
+
+```text
+datasets/
+└── theia-e3/
+    ├── ta1-theia-e3-official-6r.json
+    ├── ta1-theia-e3-official-6r.json.1
+    ├── ta1-theia-e3-official-6r.json.2
+    ├── ta1-theia-e3-official-6r.json.3
+    ├── ta1-theia-e3-official-6r.json.4
+    ├── ta1-theia-e3-official-6r.json.5
+    ├── ta1-theia-e3-official-6r.json.6
+    ├── ta1-theia-e3-official-6r.json.7
+    ├── ta1-theia-e3-official-6r.json.8
+    └── theia-e3.txt
+```
+
+当前默认脚本仍只会把 `json、json.1、json.2、json.3` 作为训练，把 `json.8` 作为测试。
+
+---
+
+### 2.4 trace-e3
 
 ```text
 datasets/
@@ -88,7 +140,9 @@ datasets/
     └── trace-e3.txt
 ```
 
-### 2.3 cadets-e3
+当前默认划分中，`json`、`.1`、`.2`、`.3` 用作训练来源；`json`、`.1`、`.2`、`.3`、`.4` 用作测试来源。
+
+### 2.5 cadets-e3
 
 ```text
 datasets/
@@ -100,6 +154,8 @@ datasets/
     ├── ta1-cadets-e3-official-2.json.1
     └── cadets-e3.txt
 ```
+
+当前默认划分中，`ta1-cadets-e3-official.json`、`.1`、`.2`、`ta1-cadets-e3-official-2.json.1` 用作训练来源；`ta1-cadets-e3-official-2.json` 用作测试来源。
 
 ---
 
