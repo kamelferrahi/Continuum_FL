@@ -1,68 +1,267 @@
-# CONTINUUM-FEDHE-Graph 
+# CONTINUUM 本地版（移除联邦学习）
 
-Welcome to the official repository housing the FEDHE-Graph implementation for our solution Continuum! This repository provides you with the necessary tools and resources to leverage federated learning techniques within the context of Continuum, a comprehensive framework for federated learning research.
+本分支将 CONTINUUM 项目改为**单机/单进程训练与评估版本**。代码保留论文中的核心检测模型：空间-时间图神经网络自编码器（STGNN Autoencoder）+ KNN 异常检测；同时移除 FedML、MPI、MQTT、客户端/服务端聚合器、联邦学习配置和同态加密通信入口。
 
-![architecture(1)-1](https://github.com/kamelferrahi/MAGIC_FEDERATED_FedML/assets/72205931/f3e67d1f-2fa1-4800-81e6-7d9c5e509cf7)
-![image](https://github.com/kamelferrahi/Continuum_FL/assets/72205931/fb78accc-df2d-4368-a690-443aba85059a)
+> 说明：论文中的联邦学习与同态加密属于部署层设计，用于多客户端协同训练和隐私保护。本地版不再进行跨客户端权重聚合，只在一台机器上读取预处理后的图快照进行训练与评估。
 
+---
 
-## Environment Setup
+## 1. 本分支做了什么
 
-The command are used in an environnement that consist of Windows 11 with anaconda installed
+- `main.py`：重写为本地训练入口，不再调用 `fedml.init()`、`FedMLRunner`、客户端训练器或服务端聚合器。
+- `utils/config.py`：改为普通命令行参数解析，不再读取 `fedml_config.yaml`。
+- `utils/dataloader.py`：删除联邦学习数据分片函数，保留图级和实体级数据加载；支持 `--data-root` 或 `CONTINUUM_DATA_ROOT` 指定数据集根目录。
+- `requirement.txt`：删除 FedML、MPI、MQTT、MLOps 等联邦部署依赖，仅保留本地训练所需核心包。
+- 删除联邦学习相关文件：`fedml_config.yaml`、`gpu_mapping.yaml`、`mpi_host_file`、`trainer/magic_trainer.py`、`trainer/magic_aggregator.py`。
 
+---
 
-First create the conda environnement for fedml with MPI support 
+## 2. 方法流程
 
-```
-conda create --name fedml-pip python=3.8
-conda activate fedml-pip
-conda install --name fedml-pip pip
-conda install -c conda-forge mpi4py openmpi
-pip install "fedml[MPI]" 
-```
+本地版的检测流程如下：
 
-Clone the Continuum FedML project onto your current folder 
+1. 读取已经预处理好的 provenance graph 快照。
+2. 使用带边特征的 GAT 捕获单个快照内的空间依赖关系。
+3. 使用 GRU 追踪多个快照之间的时间演化。
+4. 通过 STGNN Autoencoder 重构节点特征，并学习节点/图嵌入。
+5. 使用 KNN 在良性样本嵌入上建立正常行为参考；距离异常的节点或图被判定为可疑。
 
-```
-git clone https://github.com/kamelferrahi/Continuum_FL
-```
+---
 
-Install the necessary packages for Continuum to run
+## 3. 环境安装
 
-```
-conda install -c conda-forge aiohttp=3.9.1 aiosignal=1.3.1 anyio=4.2.0 attrdict=2.0.1 attrs=23.2.0 blis=0.7.11 boto3=1.34.12 botocore=1.34.12 brotli=1.1.0 catalogue=2.0.10 certifi=2023.11.17 chardet=5.2.0 charset-normalizer=3.3.2 click=8.1.7 cloudpathlib=0.16.0 confection=0.1.4 contourpy=1.2.0 cycler=0.12.1 cymem=2.0.8 dgl=1.1.3 dill=0.3.7 fastapi=0.92.0 fedml=0.8.13.post2 filelock=3.13.1 fonttools=4.47.0 frozenlist=1.4.1 fsspec=2023.12.2 gensim=4.3.2 gevent=23.9.1 geventhttpclient=2.0.9 gitdb=4.0.11 GitPython=3.1.40 GPUtil=1.4.0 graphviz=0.8.4 greenlet=3.0.3 h11=0.14.0 h5py=3.10.0 httpcore=1.0.2 httpx=0.26.0 idna=3.6 Jinja2=3.1.2 jmespath=1.0.1 joblib=1.3.2 kiwisolver=1.4.5 langcodes=3.3.0 MarkupSafe=2.1.3 matplotlib=3.8.2 mpi4py=3.1.3 mpmath=1.3.0 multidict=6.0.4 multiprocess=0.70.15 murmurhash=1.0.10 networkx=2.8.8 ntplib=0.4.0 numpy=1.26.3 nvidia-cublas-cu12=12.1.3.1 nvidia-cuda-cupti-cu12=12.1.105 nvidia-cuda-nvrtc-cu12=12.1.105 nvidia-cuda-runtime-cu12=12.1.105 nvidia-cudnn-cu12=8.9.2.26 nvidia-cufft-cu12=11.0.2.54 nvidia-curand-cu12=10.3.2.106 nvidia-cusolver-cu12=11.4.5.107 nvidia-cusparse-cu12=12.1.0.106 nvidia-nccl-cu12=2.18.1 nvidia-nvjitlink-cu12=12.3.101 nvidia-nvtx-cu12=12.1.105 onnx=1.15.0 packaging=23.2 paho-mqtt=1.6.1 pandas=2.1.4 pathtools=0.1.2 pillow=10.2.0 preshed=3.0.9 prettytable=3.9.0 promise=2.3 protobuf=3.20.3 psutil=5.9.7 py-machineid=0.4.6 pydantic=1.10.13 pyparsing=3.1.1 python-dateutil=2.8.2 python-rapidjson=1.14 pytz=2023.3.post1 PyYAML=6.0.1 redis=5.0.1 requests=2.31.0 s3transfer=0.10.0 scikit-learn=1.3.2 scipy=1.11.4 sentry-sdk=1.39.1 setproctitle=1.3.3 shortuuid=1.0.11 six=1.16.0 smart-open=6.3.0 smmap=5.0.1 sniffio=1.3.0 spacy=3.7.2 spacy-legacy=3.0.12 spacy-loggers=1.0.5 SQLAlchemy=2.0.25 srsly=2.4.8 starlette=0.25.0 sympy=1.12 thinc=8.2.2 threadpoolctl=3.2.0 torch=2.1.2 torch-cluster=1.6.3 torch-scatter=2.1.2 torch-sparse=0.6.18 torch-spline-conv=1.2.2 torch_geometric=2.4.0 torchvision=0.16.2 tqdm=4.66.1 triton=2.1.0 tritonclient=2.41.0 typer=0.9.0 typing_extensions=4.9.0 tzdata=2023.4 tzlocal=5.2 urllib3=2.0.7 uvicorn=0.25.0 wandb=0.13.2 wasabi=1.1.2 wcwidth=0.2.12 weasel=0.3.4 websocket-client=1.7.0 wget=3.2 yarl=1.9.4 zope.event=5.0 zope.interface=6.1
-```
+推荐使用 Conda 创建独立环境：
 
-Finally run the federated algorithm using the mpi command 
-
-```
-hostname > mpi_host_file
-mpirun -np 4  -hostfile mpi_host_file --oversubscribe python main.py --cf fedml_config.yaml
+```bash
+conda create -n continuum-local python=3.9 -y
+conda activate continuum-local
+pip install -r requirement.txt
 ```
 
-## Federated learning parameters
-You can adjust federated learning parameters in the `fedml_config.yaml` file. 
-Parameters such as aggregation algorithm, number of clients, and clients per round for aggregation can be modified:
-```
-train_args:
-  federated_optimizer: "FedAvg"
-  client_id_list: 
-  client_num_in_total: 4
-  client_num_per_round: 4
+如果需要 GPU，请先根据本机 CUDA 版本安装 PyTorch。例如 CUDA 12.1：
+
+```bash
+pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121
+pip install dgl==1.1.3 -f https://data.dgl.ai/wheels/repo.html
+pip install -r requirement.txt
 ```
 
-The algorithm tested are `FedAvg`, `FedProx` and `FedOpt`
+如果没有 GPU，运行时使用 `--device cpu`。
 
-## Datasets
-The experiments utilize datasets similar to those in the original Continuum project. To change datasets, edit the `fedml_config.yaml` file:
-  ```
-data_args:
-  dataset: "wget"
-  data_cache_dir: ~/fedgraphnn_data/
-  part_file:  ~/fedgraphnn_data/partition
+---
+
+## 4. 数据集目录
+
+代码默认从 `./datasets` 读取数据。也可以通过环境变量或命令行参数指定：
+
+```bash
+export CONTINUUM_DATA_ROOT=/path/to/datasets
 ```
 
-Feel free to explore and modify these settings according to your specific requirements!
+或：
 
+```bash
+python main.py --dataset wget --data-root /path/to/datasets
+```
 
+`--data-root` 应指向所有数据集的上级目录，而不是某个具体数据集目录。
 
+### 4.1 支持的数据集名称
+
+图级检测：
+
+- `wget`
+- `wget-long`
+- `streamspot`
+- `SC2`
+- `Unicorn-Cadets`
+- `clearscope-e3`
+
+实体级/节点级检测：
+
+- `cadets-e3`
+- `theia-e3`
+- `trace-e3`
+
+### 4.2 图级数据示例
+
+`wget` 和 `streamspot`：
+
+```text
+/path/to/datasets/
+└── wget/
+    └── cache/
+        ├── graph0/
+        │   ├── graph0.pkl
+        │   ├── graph1.pkl
+        │   └── ...
+        └── graph1/
+```
+
+`SC2`、`Unicorn-Cadets`、`wget-long`、`clearscope-e3`：
+
+```text
+/path/to/datasets/
+└── SC2/
+    ├── node.pkl
+    ├── edge.pkl
+    └── cache/
+        ├── benign/
+        │   └── graph0/
+        │       ├── graph0.pkl
+        │       └── ...
+        └── attack/
+            └── graph0/
+                ├── graph0.pkl
+                └── ...
+```
+
+### 4.3 实体级数据示例
+
+```text
+/path/to/datasets/
+└── trace-e3/
+    ├── malicious.pkl
+    ├── metadata.json          # 可选；没有时会自动生成
+    ├── train/
+    │   └── graph0/
+    │       ├── graph0.pkl
+    │       └── ...
+    └── test/
+        └── graph0/
+            ├── graph0.pkl
+            └── ...
+```
+
+每个 `graph*.pkl` 应为 DGLGraph，并包含：
+
+```python
+g.ndata["attr"]  # 节点特征
+g.edata["attr"]  # 边特征
+```
+
+图级 pooling 如需按节点类型筛选，还应包含：
+
+```python
+g.ndata["type"]
+```
+
+---
+
+## 5. 运行方法
+
+### 5.1 图级检测
+
+```bash
+python main.py \
+  --dataset wget \
+  --data-root /path/to/datasets \
+  --snapshot 1 \
+  --device auto
+```
+
+### 5.2 实体级/节点级检测
+
+```bash
+python main.py \
+  --dataset trace-e3 \
+  --data-root /path/to/datasets \
+  --snapshot 1 \
+  --device cuda:0
+```
+
+### 5.3 只评估已有检查点
+
+```bash
+python main.py \
+  --dataset wget \
+  --data-root /path/to/datasets \
+  --snapshot 1 \
+  --device cpu \
+  --eval-only \
+  --checkpoint checkpoints/checkpoint-wget.pt
+```
+
+---
+
+## 6. 常用参数
+
+| 参数 | 默认值 | 说明 |
+| --- | --- | --- |
+| `--dataset` | `wget` | 数据集名称。 |
+| `--data-root` | `./datasets` | 数据集根目录。 |
+| `--snapshot` | `1` | 每个样本读取的快照数量。 |
+| `--device` | `auto` | `auto`、`cpu`、`cuda`、`cuda:0` 等。 |
+| `--epochs` | 自动 | 图级默认 6，实体级默认 50。 |
+| `--batch-size` | `1` | 图级训练 batch size。 |
+| `--lr` | `0.0001` | 学习率。 |
+| `--optimizer` | `adam` | 可选 `adam`、`adamw`、`adadelta`、`radam`、`sgd`。 |
+| `--out-dim` | `64` | STGNN 隐层/输出维度。 |
+| `--gnn-layers` | 自动 | GAT 层数。 |
+| `--heads` | `4` | GAT 注意力头数。 |
+| `--pooling` | `mean` | 图级嵌入聚合方式。 |
+| `--checkpoint-dir` | `./checkpoints` | 检查点目录。 |
+| `--result-dir` | `./result` | 最终模型保存目录。 |
+| `--eval-only` | 关闭 | 只加载检查点评估。 |
+
+---
+
+## 7. 输出文件
+
+训练和评估完成后会生成：
+
+```text
+checkpoints/checkpoint-{dataset}.pt
+result/local-{dataset}.pt
+eval_result/distance_save_{dataset}.pkl
+```
+
+终端会打印 AUC、F1、Precision、Recall、TP、FP、TN、FN 等指标。
+
+---
+
+## 8. 与旧版联邦学习运行方式的区别
+
+旧版：
+
+```bash
+mpirun -np 4 --hostfile mpi_host_file --oversubscribe python main.py --cf fedml_config.yaml
+```
+
+本地版：
+
+```bash
+python main.py --dataset wget --data-root /path/to/datasets --snapshot 1 --device auto
+```
+
+本地版不再需要客户端数量、聚合轮次、`FedAvg`/`FedProx`/`FedOpt`、MQTT/S3、GPU mapping 或同态加密通信配置。
+
+---
+
+## 9. 常见问题
+
+### 找不到数据集
+
+请确认 `--data-root` 指向数据集根目录。例如：
+
+```bash
+python main.py --dataset wget --data-root /path/to/datasets
+```
+
+而不是：
+
+```bash
+python main.py --dataset wget --data-root /path/to/datasets/wget
+```
+
+### CUDA 不可用
+
+改用 CPU：
+
+```bash
+python main.py --dataset wget --device cpu
+```
+
+### 内存或显存不足
+
+APT provenance graph 可能很大。可以先用 `wget` 或 `streamspot` 验证流程，关闭 `--validation`，减少 `--snapshot`，或改用 CPU。
